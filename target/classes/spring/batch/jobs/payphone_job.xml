@@ -1,0 +1,89 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/batch
+		http://www.springframework.org/schema/batch/spring-batch-2.2.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	">
+    <import resource="../config/context.xml" />
+
+    <!-- Batch Job -->
+    <batch:job id="payphoneJob">
+       <batch:step id="importData" next="processData">
+            <batch:tasklet>
+                <batch:chunk reader="rawDataReader" writer="rawDataWriter" commit-interval="100"/>
+            </batch:tasklet>
+            <batch:listeners>
+                <batch:listener ref="genericStepListener"/>
+                <batch:listener ref="genericReadListener"/>
+                <batch:listener ref="genericWriteListener"/>
+            </batch:listeners>
+        </batch:step>
+       <batch:step id="processData" next="generateReport">
+            <batch:tasklet>
+                <batch:chunk reader="processedPayphoneReader" processor="payphoneProcessor" writer="processedPayphoneWriter" commit-interval="100"/>
+            </batch:tasklet>
+           <batch:listeners>
+               <batch:listener ref="genericStepListener"/>
+               <batch:listener ref="genericReadListener"/>
+               <batch:listener ref="genericWriteListener"/>
+           </batch:listeners>
+        </batch:step>
+       <batch:step id="generateReport">
+            <batch:tasklet ref="generateReportTasklet"/>
+        </batch:step>
+    </batch:job>
+
+
+    <!-- Reader Configurations -->
+    <bean id="rawDataReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+            <property name="resource" value="classpath:data/payphone_locations.csv"/>
+            <property name="linesToSkip" value="1"/>
+            <property name="lineMapper">
+                <bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+                    <property name="lineTokenizer">
+                        <bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+                            <property name="names" value="id,company,the_geom,boro,building,street,cb,installati,active,payphones_,x_coordina,y_coordina,curbside,wifi,advertisin,electrifie,zoning,distrct_co "/>
+                        </bean>
+                    </property>
+                    <property name="fieldSetMapper">
+                        <bean class="com.batch.mapper.PayphoneFieldSetMapper"/>
+                    </property>
+                </bean>
+            </property>
+    </bean>
+
+    <bean id="processedPayphoneReader" class="org.springframework.batch.item.database.JdbcCursorItemReader">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="sql" value="SELECT * FROM payphone.raw_payphone"/>
+        <property name="rowMapper">
+            <bean  class="com.batch.mapper.PayphoneRowMapper"/>
+        </property>
+    </bean>
+
+    <!-- Writer Configurations -->
+    <bean id="rawDataWriter" class="com.batch.writer.PayphoneRawDataWriter">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <bean id="processedPayphoneWriter" class="com.batch.writer.ProcessedPayphoneWriter">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <!-- Processor Configurations -->
+    <bean id="payphoneProcessor" class="com.batch.processor.PayphoneProcessor"></bean>
+
+
+    <!-- Tasklets -->
+    <bean id="generateReportTasklet" class="com.batch.tasklets.GenerateReportTasklet">
+        <property name="targetDirectory" value="targetDirectory"/>
+        <property name="targetFileName" value="targetFileName"/>
+    </bean>
+
+    <!-- Listeners -->
+    <bean id="genericStepListener" class="com.batch.listeners.GenericStepListener"/>
+    <bean id="genericWriteListener" class="com.batch.listeners.GenericWriterListener"/>
+    <bean id="genericReadListener" class="com.batch.listeners.GenericReaderListener"/>
+
+</beans>

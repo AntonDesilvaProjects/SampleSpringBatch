@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+    <util:map id="payphone_sql" key-type="java.lang.String" value-type="java.lang.String">
+
+        <entry key="insert_raw_payphone"
+               value="
+                    INSERT INTO payphone.raw_payphone
+	                    ( id, company, latitude, longitude, boro, building, street, isActive, zoning, pointStr )
+                    VALUES
+	                    ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        />
+
+        <entry key="update_raw_payphone"
+               value="
+                    UPDATE payphone.raw_payphone
+                    SET
+                        id = ?,
+                        company = ?,
+                        latitude = ?,
+                        longitude = ?,
+                        boro = ?,
+                        building = ?,
+                        street = ?,
+                        isActive = ?,
+                        zoning = ?,
+                        pointStr = ?
+                    WHERE
+                        id = ?;"
+        />
+
+        <entry key="insert_processed_payphone"
+               value="
+                    INSERT INTO payphone.processed_payphone
+	                    ( id, isActive, company, latitude, longitude, address, googleMapsUrl )
+                    VALUES
+	                    ( ?, ?, ?, ?, ?, ?, ? );"
+        />
+
+        <entry key="update_processed_payphone"
+               value="
+                    UPDATE payphone.processed_payphone
+                    SET
+                        id = ?,
+                        isActive = ?,
+                        company = ?,
+                        latitude = ?,
+                        longitude = ?,
+                        address = ?,
+                        googleMapsUrl = ?
+                    WHERE
+                        id = ?;"
+        />
+
+        <entry key="get_processed_payphone" value="SELECT * FROM payphone.processed_payphone"/>
+
+    </util:map>
+
+</beans>

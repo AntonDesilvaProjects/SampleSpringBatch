@@ -1,0 +1,60 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/jdbc
+		http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/batch
+	    http://www.springframework.org/schema/batch/spring-batch-2.2.xsd">
+
+    <context:component-scan base-package="com.batch"/>
+
+    <import resource="../../../dal/sql_queries.xml"/>
+
+    <!-- Data Sources -->
+
+    <bean id="batchMetaDataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://localhost:3306/batch" />
+        <property name="username" value="root" />
+        <property name="password" value="*******" />
+    </bean>
+
+    <bean id="dataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://localhost:3306/payphone" />
+        <property name="username" value="root" />
+        <property name="password" value="*******" />
+    </bean>
+
+    <!-- Initialize the Spring Batch Meta data -->
+    <jdbc:initialize-database data-source="batchMetaDataSource">
+        <jdbc:script location="org/springframework/batch/core/schema-drop-mysql.sql" />
+        <jdbc:script location="org/springframework/batch/core/schema-mysql.sql" />
+    </jdbc:initialize-database>
+
+
+
+    <!-- Spring Batch(Job Repository + Job Launcher )-->
+    <batch:job-repository id="jobRepository" data-source="batchMetaDataSource" transaction-manager="transactionManager"/>
+
+    <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="batchMetaDataSource"/>
+    </bean>
+
+    <!-- Spring Autowiring Configs -->
+    <bean id ="primaryDataSource" class="org.springframework.jdbc.core.JdbcTemplate">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+</beans>
